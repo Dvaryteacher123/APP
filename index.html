@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="sw">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dvary - Ingia</title>
+    
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    
+    <style>
+        /* ============================================
+           ROOT VARIABLES
+           ============================================ */
+        :root {
+            --bg-body: #0a0a1a;
+            --bg-container: rgba(255,255,255,0.05);
+            --bg-section: rgba(255,255,255,0.03);
+            --bg-card: rgba(255,255,255,0.05);
+            --text-primary: #ffffff;
+            --text-secondary: rgba(255,255,255,0.7);
+            --text-light: rgba(255,255,255,0.4);
+            --border-color: rgba(255,255,255,0.1);
+            --shadow: 0 30px 80px rgba(0,0,0,0.6);
+            --gradient-start: #667eea;
+            --gradient-end: #764ba2;
+            --btn-primary: #667eea;
+            --btn-success: #28a745;
+            --btn-danger: #dc3545;
+            --transition: all 0.3s ease;
+        }
+        
+        /* ============================================
+           GLOBAL STYLES
+           ============================================ */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg-body);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        /* Animated Background */
+        body::before {
+            content: '';
+            position: fixed;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: 
+                radial-gradient(ellipse at 20% 50%, rgba(102, 126, 234, 0.15) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 50%, rgba(118, 75, 162, 0.15) 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 100%, rgba(240, 147, 251, 0.08) 0%, transparent 50%);
+            animation: rotateBg 30s linear infinite;
+            z-index: 0;
+        }
+        
+        @keyframes rotateBg {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Floating particles */
+        .particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            overflow: hidden;
+        }
+        
+        .particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 50%;
+            animation: floatParticle 20s infinite linear;
+        }
+        
+        @keyframes floatParticle {
+            0% {
+                transform: translateY(100vh) rotate(0deg);
+                opacity: 0;
+            }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% {
+                transform: translateY(-100vh) rotate(720deg);
+                opacity: 0;
+            }
+        }
+        
+        /* ============================================
+           MAIN CONTAINER
+           ============================================ */
+        .container {
+            background: var(--bg-container);
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+            border: 1px solid var(--border-color);
+            border-radius: 30px;
+            padding: 45px 40px 35px;
+            max-width: 440px;
+            width: 100%;
+            position: relative;
+            z-index: 1;
+            box-shadow: var(--shadow);
+            animation: slideUp 0.8s ease;
+        }
+        
+        @keyframes slideUp {
+            from {
+                transform: translateY(50px) scale(0.95);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0) scale(1);
+                opacity: 1;
+            }
+        }
+        
+        /* ============================================
+           HEADER
+           ============================================ */
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .header .icon {
+            font-size: 50px;
+            display: block;
+            margin-bottom: 8px;
+            animation: pulseIcon 3s ease-in-out infinite;
+        }
+        
+        @keyframes pulseIcon {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+        
+        .header h1 {
+            font-size: 40px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #667eea, #764ba2, #f093fb);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -1px;
+        }
+        
+        .header p {
+            color: var(--text-secondary);
+            font-size: 14px;
+            margin-top: 5px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            font-weight: 300;
+        }
+        
+        /* ============================================
+           TABS
+           ============================================ */
+        .tab-container {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 25px;
+            background: rgba(255,255,255,0.03);
+            border-radius: 16px;
+            padding: 5px;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+        
+        .tab-btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            background: transparent;
+            color: var(--text-light);
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            border-radius: 12px;
+            transition: var(--transition);
+        }
+        
+        .tab-btn.active {
+            background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+            color: white;
+            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
+        }
+        
+        .tab-btn:hover:not(.active) {
+            color: var(--text-secondary);
+        }
+        
+        /* ============================================
+           FORMS
+           ============================================ */
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.4s ease;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .form-group {
+            margin-bottom: 18px;
+        }
+        
+        .form-group label {
+            display: block;
+            color: var(--text-secondary);
+            font-size: 13px;
+            font-weight: 500;
+            margin-bottom: 6px;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            background: rgba(255,255,255,0.03);
+            color: white;
+            font-size: 15px;
+            transition: var(--transition);
+            outline: none;
+        }
+        
+        .form-group input:focus {
+            border-color: var(--gradient-start);
+            background: rgba(255,255,255,0.06);
+            box-shadow: 0 0 30px rgba(102, 126, 234, 0.08);
+        }
+        
+        .form-group input::placeholder {
+            color: var(--text-light);
+        }
+        
+        /* ============================================
+           BUTTONS
+           ============================================ */
+        .btn {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+            color: white;
+            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 35px rgba(102, 126, 234, 0.5);
+        }
+        
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+        
+        .btn-google {
+            background: rgba(255,255,255,0.06);
+            color: white;
+            border: 2px solid rgba(255,255,255,0.08);
+        }
+        
+        .btn-google:hover {
+            background: rgba(255,255,255,0.12);
+            transform: translateY(-2px);
+            border-color: rgba(255,255,255,0.2);
+        }
+        
+        .btn-google svg {
+            width: 20px;
+            height: 20px;
+        }
+        
+        /* ============================================
+           DIVIDER
+           ============================================ */
+        .divider {
+            display: flex;
+            align-items: center;
+            margin: 22px 0;
+        }
+        
+        .divider::before,
+        .divider::after {
+            content: '';
+            flex: 1;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
+        
+        .divider-text {
+            color: var(--text-light);
+            font-size: 11px;
+            padding: 0 14px;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            font-weight: 600;
+        }
+        
+        /* ============================================
+           MESSAGES
+           ============================================ */
+        .message {
+            display: none;
+            padding: 12px 16px;
+            border-radius: 12px;
+            margin-top: 16px;
+            font-size: 14px;
+            font-weight: 500;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        .message.active {
+            display: block;
+        }
+        
+        .message.error {
+            background: rgba(220, 53, 69, 0.15);
+            border: 1px solid rgba(220, 53, 69, 0.2);
+            color: #ff6b6b;
+        }
+        
+        .message.success {
+            background: rgba(40, 167, 69, 0.15);
+            border: 1px solid rgba(40, 167, 69, 0.2);
+            color: #51cf66;
+        }
+        
+        .message.info {
+            background: rgba(102, 126, 234, 0.15);
+            border: 1px solid rgba(102, 126, 234, 0.2);
+            color: #8898f5;
+        }
+        
+        /* ============================================
+           LOADING
+           ============================================ */
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 12px;
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+        
+        .loading.active {
+            display: block;
+        }
+        
+        .spinner {
+            display: inline-block;
+            width: 22px;
+            height: 22px;
+            border: 3px solid rgba(255,255,255,0.06);
+            border-radius: 50%;
+            border-top-color: #667eea;
+            animation: spin 0.8s ease-in-out infinite;
+            margin-right: 10px;
+            vertical-align: middle;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* ============================================
+           AUDIO PLAYER
+           ============================================ */
+        .audio-player {
+            margin-top: 25px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border-color);
+        }
+        
+        .audio-player audio {
+            width: 100%;
+            border-radius: 8px;
+            background: rgba(255,255,255,0.03);
+        }
+        
+        .audio-player audio::-webkit-media-controls-panel {
+            background: rgba(255,255,255,0.05);
+        }
+        
+        .audio-player audio::-webkit-media-controls-current-time-display,
+        .audio-player audio::-webkit-media-controls-time-remaining-display {
+            color: var(--text-secondary);
+        }
+        
+        /* ============================================
+           FOOTER
+           ============================================ */
+        .footer {
+            margin-top: 25px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border-color);
+            text-align: center;
+            color: var(--text-light);
+            font-size: 12px;
+            letter-spacing: 1px;
+        }
+        
+        .footer span {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 600;
+        }
+        
+        /* ============================================
+           RESPONSIVE
+           ============================================ */
+        @media (max-width: 480px) {
+            .container {
+                padding: 30px 20px 25px;
+            }
+            
+            .header h1 {
+                font-size: 32px;
+            }
+            
+            .header .icon {
+                font-size: 40px;
+            }
+            
+            .tab-btn {
+                font-size: 13px;
+                padding: 10px;
+            }
+            
+            .btn {
+                font-size: 14px;
+                padding: 12px;
+            }
+            
+            .form-group input {
+                padding: 12px 14px;
+                font-size: 14px;
+            }
+        }
+        
+        @media (max-width: 360px) {
+            .container {
+                padding: 20px 15px;
+            }
+            
+            .header h1 {
+                font-size: 28px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Floating Particles -->
+    <div class="particles" id="particles"></div>
+    
+    <!-- ==========================================
+    MAIN CONTAINER
+    ========================================== -->
+    <div class="container">
+        <!-- ==========================================
+        HEADER
+        ========================================== -->
+        <div class="header">
+            <span class="icon">🚀</span>
+            <h1>Dvary</h1>
+            <p>Ingia kwa kutumia akaunti yako</p>
+        </div>
+        
+        <!-- ==========================================
+        TABS
+        ========================================== -->
+        <div class="tab-container">
+            <button class="tab-btn active" data-tab="login">🔑 Ingia</button>
+            <button class="tab-btn" data-tab="signup">📝 Jiandikisha</button>
+        </div>
+        
+        <!-- ==========================================
+        LOGIN FORM
+        ========================================== -->
+        <div id="loginForm" class="tab-content active">
+            <form id="loginFormElement">
+                <div class="form-group">
+                    <label>📧 Barua pepe</label>
+                    <input type="email" id="loginEmail" placeholder="email@example.com" required>
+                </div>
+                <div class="form-group">
+                    <label>🔒 Nenosiri</label>
+                    <input type="password" id="loginPassword" placeholder="Nenosiri lako" required minlength="6">
+                </div>
+                <button type="submit" class="btn btn-primary">🔑 Ingia</button>
+            </form>
+        </div>
+        
+        <!-- ==========================================
+        SIGNUP FORM
+        ========================================== -->
+        <div id="signupForm" class="tab-content">
+            <form id="signupFormElement">
+                <div class="form-group">
+                    <label>👤 Jina lako</label>
+                    <input type="text" id="signupName" placeholder="Jina lako kamili" required>
+                </div>
+                <div class="form-group">
+                    <label>📧 Barua pepe</label>
+                    <input type="email" id="signupEmail" placeholder="email@example.com" required>
+                </div>
+                <div class="form-group">
+                    <label>🔒 Nenosiri</label>
+                    <input type="password" id="signupPassword" placeholder="Angalau herufi 6" required minlength="6">
+                </div>
+                <div class="form-group">
+                    <label>✅ Thibitisha nenosiri</label>
+                    <input type="password" id="signupConfirmPassword" placeholder="Andika nenosiri tena" required>
+                </div>
+                <button type="submit" class="btn btn-primary">📝 Jiandikisha</button>
+            </form>
+        </div>
+        
+        <!-- ==========================================
+        DIVIDER
+        ========================================== -->
+        <div class="divider">
+            <span class="divider-text">Au</span>
+        </div>
+        
+        <!-- ==========================================
+        GOOGLE SIGN IN
+        ========================================== -->
+        <button id="signInBtn" class="btn btn-google">
+            <svg width="20" height="20" viewBox="0 0 48 48">
+                <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+                <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+                <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+                <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+            </svg>
+            Ingia na Google
+        </button>
+        
+        <!-- ==========================================
+        LOADING
+        ========================================== -->
+        <div id="loading" class="loading">
+            <span class="spinner"></span> Inapakia...
+        </div>
+        
+        <!-- ==========================================
+        MESSAGE
+        ========================================== -->
+        <div id="message" class="message"></div>
+        
+        <!-- ==========================================
+        AUDIO PLAYER
+        ========================================== -->
+        <div class="audio-player">
+            <audio controls>
+                <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" type="audio/mpeg">
+                Browser yako haitumii audio.
+            </audio>
+        </div>
+        
+        <!-- ==========================================
+        FOOTER
+        ========================================== -->
+        <div class="footer">
+            © 2026 <span>Dvary</span> • Haki zote zimehifadhiwa
+        </div>
+    </div>
+    
+    <script>
+        // ============================================
+        // FIREBASE CONFIGURATION (SDK YAKO)
+        // ============================================
+        const firebaseConfig = {
+            apiKey: "AIzaSyDpFyANpjv2dMUvXoMSSmqoT3s1UwJLUkg",
+            authDomain: "dvary-9a7d0.firebaseapp.com",
+            projectId: "dvary-9a7d0",
+            storageBucket: "dvary-9a7d0.firebasestorage.app",
+            messagingSenderId: "107370806066",
+            appId: "1:107370806066:android:e954fb03d99e52ac09f52b"
+        };
+        
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const googleProvider = new firebase.auth.GoogleAuthProvider();
+        
+        // ============================================
+        // PARTICLES BACKGROUND
+        // ============================================
+        function createParticles() {
+            const container = document.getElementById('particles');
+            const count = 50;
+            
+            for (let i = 0; i < count; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.width = (Math.random() * 4 + 2) + 'px';
+                particle.style.height = particle.style.width;
+                particle.style.animationDuration = (Math.random() * 20 + 15) + 's';
+                particle.style.animationDelay = (Math.random() * 20) + 's';
+                particle.style.opacity = Math.random() * 0.3 + 0.1;
+                container.appendChild(particle);
+            }
+        }
+        createParticles();
+        
+        // ============================================
+        // DOM ELEMENTS
+        // ============================================
+        const loginForm = document.getElementById('loginFormElement');
+        const signupForm = document.getElementById('signupFormElement');
+        const loginEmail = document.getElementById('loginEmail');
+        const loginPassword = document.getElementById('loginPassword');
+        const signupName = document.getElementById('signupName');
+        const signupEmail = document.getElementById('signupEmail');
+        const signupPassword = document.getElementById('signupPassword');
+        const signupConfirmPassword = document.getElementById('signupConfirmPassword');
+        const signInBtn = document.getElementById('signInBtn');
+        const loading = document.getElementById('loading');
+        const message = document.getElementById('message');
+        const tabBtns = document.querySelectorAll('.tab-btn');
+        
+        // ============================================
+        // HELPER FUNCTIONS
+        // ============================================
+        function showLoading() {
+            loading.classList.add('active');
+        }
+        
+        function hideLoading() {
+            loading.classList.remove('active');
+        }
+        
+        function showMessage(text, type = 'info') {
+            message.textContent = text;
+            message.className = 'message active ' + type;
+            setTimeout(() => {
+                message.classList.remove('active');
+            }, 5000);
+        }
+        
+        function clearForms() {
+            loginEmail.value = '';
+            loginPassword.value = '';
+            signupName.value = '';
+            signupEmail.value = '';
+            signupPassword.value = '';
+            signupConfirmPassword.value = '';
+        }
+        
+        // ============================================
+        // TAB SWITCHING
+        // ============================================
+        tabBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                tabBtns.forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                
+                const tab = this.dataset.tab;
+                document.querySelectorAll('.tab-content').forEach(content => {
+                    content.classList.remove('active');
+                });
+                document.getElementById(tab + 'Form').classList.add('active');
+                
+                message.classList.remove('active');
+            });
+        });
+        
+        // ============================================
+        // SIGN UP
+        // ============================================
+        signupForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const name = signupName.value.trim();
+            const email = signupEmail.value.trim();
+            const password = signupPassword.value;
+            const confirm = signupConfirmPassword.value;
+            
+            if (!name || !email || !password || !confirm) {
+                showMessage('Tafadhali jaza sehemu zote', 'error');
+                return;
+            }
+            
+            if (password !== confirm) {
+                showMessage('Nenosiri hazifanani!', 'error');
+                return;
+            }
+            
+            if (password.length < 6) {
+                showMessage('Nenosiri lazima liwe na angalau herufi 6', 'error');
+                return;
+            }
+            
+            showLoading();
+            
+            try {
+                const result = await auth.createUserWithEmailAndPassword(email, password);
+                const user = result.user;
+                
+                await user.updateProfile({ displayName: name });
+                
+                hideLoading();
+                showMessage('✅ Akaunti imeundwa! Karibu ' + name + '!', 'success');
+                clearForms();
+                
+                // Redirect to dashboard after successful signup
+                setTimeout(() => {
+                    window.location.href = 'dashboard.html';
+                }, 1500);
+                
+            } catch (error) {
+                hideLoading();
+                console.error('Signup error:', error);
+                
+                let msg = 'Kosa: ';
+                switch (error.code) {
+                    case 'auth/email-already-in-use':
+                        msg += 'Barua pepe hii tayari inatumika.';
+                        break;
+                    case 'auth/invalid-email':
+                        msg += 'Barua pepe si sahihi.';
+                        break;
+                    case 'auth/weak-password':
+                        msg += 'Nenosiri ni dhaifu.';
+                        break;
+                    default:
+                        msg += error.message;
+                }
+                showMessage(msg, 'error');
+            }
+        });
+        
+        // ============================================
+        // LOGIN
+        // ============================================
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const email = loginEmail.value.trim();
+            const password = loginPassword.value;
+            
+            if (!email || !password) {
+                showMessage('Tafadhali jaza barua pepe na nenosiri', 'error');
+                return;
+            }
+            
+            showLoading();
+            
+            try {
+                const result = await auth.signInWithEmailAndPassword(email, password);
+                const user = result.user;
+                
+                hideLoading();
+                showMessage('✅ Karibu tena, ' + (user.displayName || user.email) + '!', 'success');
+                clearForms();
+                
+                // Redirect to dashboard after successful login
+                setTimeout(() => {
+                    window.location.href = 'dashboard.html';
+                }, 1500);
+                
+            } catch (error) {
+                hideLoading();
+                console.error('Login error:', error);
+                
+                let msg = 'Kosa: ';
+                switch (error.code) {
+                    case 'auth/user-not-found':
+                        msg += 'Akaunti haipatikani. Jiandikisha kwanza.';
+                        break;
+                    case 'auth/wrong-password':
+                        msg += 'Nenosiri si sahihi.';
+                        break;
+                    case 'auth/invalid-email':
+                        msg += 'Barua pepe si sahihi.';
+                        break;
+                    case 'auth/user-disabled':
+                        msg += 'Akaunti imezimwa.';
+                        break;
+                    case 'auth/too-many-requests':
+                        msg += 'Majaribio mengi sana. Jaribu tena baadaye.';
+                        break;
+                    default:
+                        msg += error.message;
+                }
+                showMessage(msg, 'error');
+            }
+        });
+        
+        // ============================================
+        // GOOGLE SIGN IN
+        // ============================================
+        signInBtn.addEventListener('click', async () => {
+            showLoading();
+            
+            try {
+                const result = await auth.signInWithPopup(googleProvider);
+                const user = result.user;
+                hideLoading();
+                showMessage('✅ Karibu ' + (user.displayName || user.email) + '!', 'success');
+                
+                // Redirect to dashboard after successful Google sign in
+                setTimeout(() => {
+                    window.location.href = 'dashboard.html';
+                }, 1500);
+                
+            } catch (error) {
+                hideLoading();
+                console.error('Google signin error:', error);
+                
+                if (error.code === 'auth/popup-blocked') {
+                    showMessage('⚠️ Ruhusu popups kwenye browser yako.', 'error');
+                } else if (error.code === 'auth/popup-closed-by-user') {
+                    showMessage('Umeghairi kuingia. Jaribu tena.', 'info');
+                } else if (error.code !== 'auth/cancelled-popup-request') {
+                    showMessage('Kosa: ' + error.message, 'error');
+                }
+            }
+        });
+        
+        // ============================================
+        // AUTH STATE LISTENER
+        // ============================================
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                console.log('✅ Mtumiaji ameingia:', user.email);
+                // If user is already logged in, redirect to dashboard
+                // window.location.href = 'dashboard.html';
+            } else {
+                console.log('🔴 Mtumiaji ametoka');
+            }
+        });
+        
+        // ============================================
+        // KEYBOARD SHORTCUT
+        // ============================================
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                const activeForm = document.querySelector('.tab-content.active');
+                if (activeForm) {
+                    const btn = activeForm.querySelector('button[type="submit"]');
+                    if (btn) btn.click();
+                }
+            }
+        });
+        
+        console.log('🚀 Dvary Login - Imepakiwa!');
+        console.log('📡 Firebase imeunganishwa kikamilifu.');
+        console.log('🔐 SDK yako imeunganishwa!');
+    </script>
+</body>
+  </html>
